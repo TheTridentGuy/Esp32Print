@@ -1,0 +1,2 @@
+source /home/aiden/Desktop/Esp32Print/Esp32Print/build/gdbinit/symbols
+source /home/aiden/Desktop/Esp32Print/Esp32Print/build/gdbinit/connect

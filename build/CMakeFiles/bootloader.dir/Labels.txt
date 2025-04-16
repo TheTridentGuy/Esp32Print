@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/CMakeFiles/bootloader
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/CMakeFiles/bootloader.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/CMakeFiles/bootloader-complete.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/home/aiden/Desktop/Esp32Print/Esp32Print/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
