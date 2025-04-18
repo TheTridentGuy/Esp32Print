@@ -53,17 +53,26 @@ void gap_ble_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param){
             param->scan_rst.bda[0], param->scan_rst.bda[1], param->scan_rst.bda[2],
             param->scan_rst.bda[3], param->scan_rst.bda[4], param->scan_rst.bda[5]);
         if(!found_printer && param->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_RES_EVT){
-            char *device_name = (char *)param->scan_rst.ble_adv;
-            ESP_LOGI(GAP_TAG, "Device name: %s", device_name);
-            if(strstr(device_name, "MXW01") != NULL){
-                found_printer = true;
-                memcpy(printer_addr, param->scan_rst.bda, sizeof(esp_bd_addr_t));
-                ESP_ERROR_CHECK(esp_ble_gap_stop_scanning());
-                ESP_ERROR_CHECK(esp_ble_gattc_open(client_if, printer_addr, BLE_ADDR_TYPE_PUBLIC, true));
+            uint8_t length = 0;
+            uint8_t *adv_data = esp_ble_resolve_adv_data(param->scan_rst.ble_adv, ESP_BLE_AD_TYPE_NAME_CMPL, &length);
+            if(length > 0 && adv_data != NULL){
+                char device_name[32] = {0};
+                memcpy(device_name, adv_data, length);
+                device_name[length] = '\0';
+                ESP_LOGI(GAP_TAG, "Device name: %.*s", length, adv_data);
+                if(strstr(device_name, "MXW01") != NULL){
+                    found_printer = true;
+                    memcpy(printer_addr, param->scan_rst.bda, sizeof(esp_bd_addr_t));
+                    ESP_ERROR_CHECK(esp_ble_gap_stop_scanning());
+                    ESP_ERROR_CHECK(esp_ble_gattc_open(client_if, printer_addr, BLE_ADDR_TYPE_PUBLIC, true));
+                }
             }
         }
     }else if(event == ESP_GAP_BLE_SCAN_STOP_COMPLETE_EVT){
         ESP_LOGI(GAP_TAG, "Scan stopped...");
+        if(!found_printer){
+            ESP_LOGE(GAP_TAG, "Unable to find a printer.");
+        }
     }else{
         ESP_LOGI(GAP_TAG, "GAP event: %d", event);
     }
