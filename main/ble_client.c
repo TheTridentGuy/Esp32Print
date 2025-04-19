@@ -14,6 +14,7 @@
 #define GATTC_TAG "GATT_CLIENT"
 #define GAP_TAG "GAP"
 
+
 static esp_gatt_if_t client_if;
 static esp_bd_addr_t printer_addr;
 static bool found_printer = false;
@@ -32,7 +33,33 @@ void gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_
         };
         ESP_ERROR_CHECK(esp_ble_gap_set_scan_params(&scan_params));
     }else if(event == ESP_GATTC_OPEN_EVT){
-        ESP_LOGI(GATTC_TAG, "Connected to printer...");
+        if(param->open.status == ESP_GATT_OK){
+            ESP_LOGI(GATTC_TAG, "Connected to printer...");
+            uint8_t set_intensity_data[] = {0x22, 0x21, 0xA2, 0x00, 0b1000, 0b0000, 0x5d, 0x94, 0xFF};
+            uint8_t* set_intensity = set_intensity_data;
+            ESP_ERROR_CHECK(esp_ble_gattc_write_char(client_if, param->open.conn_id, 0xAE01, sizeof(set_intensity), set_intensity, ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE));
+            ESP_LOGI(GATTC_TAG, "Intensity set...");
+            vTaskDelay(pdMS_TO_TICKS(100));
+            uint8_t print_request_data[] = {0x22, 0x21, 0xA9, 0x00, 0b1100, 0b0000, 0x01, 0x30, 0x00, 0x92, 0xFF};
+            uint8_t* print_request = print_request_data;
+            ESP_ERROR_CHECK(esp_ble_gattc_write_char(client_if, param->open.conn_id, 0xAE01, sizeof(print_request), print_request, ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE));
+            ESP_LOGI(GATTC_TAG, "Print request sent...");
+            vTaskDelay(pdMS_TO_TICKS(10000));
+            for(int i=0; i<48; i++){
+                uint8_t print_data_data[] = {0xFF};
+                uint8_t* print_data = print_data_data;
+                ESP_ERROR_CHECK(esp_ble_gattc_write_char(client_if, param->open.conn_id, 0xAE03, sizeof(print_data), print_data, ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE));
+                vTaskDelay(pdMS_TO_TICKS(50));
+            }
+            ESP_LOGI(GATTC_TAG, "Print data sent...");
+            vTaskDelay(pdMS_TO_TICKS(100));
+            uint8_t print_flush_data[] = {0x22, 0x21, 0xAD, 0x00, 0b1000, 0b0000, 0x00, 0x00, 0xFF};
+            uint8_t* print_flush = print_flush_data;
+            ESP_ERROR_CHECK(esp_ble_gattc_write_char(client_if, param->open.conn_id, 0xAE01, sizeof(print_flush), print_flush, ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE));
+            ESP_LOGI(GATTC_TAG, "Print data flushed...");
+        }else{
+            ESP_LOGE(GATTC_TAG, "Failed to connect to printer, status: %d", param->open.status);
+        }
     }else if(event == ESP_GATTC_CLOSE_EVT){
         ESP_LOGI(GATTC_TAG, "Disconnected from printer...");
     }else if(event == ESP_GATTC_READ_CHAR_EVT){
@@ -43,6 +70,7 @@ void gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_
         ESP_LOGI(GATTC_TAG, "GATT event: %d", event);
     }
 }
+
 
 void gap_ble_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param){
     if(event == ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT){
@@ -71,7 +99,7 @@ void gap_ble_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param){
     }else if(event == ESP_GAP_BLE_SCAN_STOP_COMPLETE_EVT){
         ESP_LOGI(GAP_TAG, "Scan stopped...");
         if(!found_printer){
-            ESP_LOGE(GAP_TAG, "Unable to find a printer.");
+            ESP_LOGW(GAP_TAG, "Unable to find a printer.");
         }
     }else{
         ESP_LOGI(GAP_TAG, "GAP event: %d", event);
